@@ -7,12 +7,6 @@ import com.example.tic_tac_toe.model.Game;
 public class GameService {
     private Game game = new Game();
 
-    private final int[][] WINNING_COMBINATIONS = {
-            { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, // rows
-            { 0, 3, 6 }, { 1, 4, 7 }, { 2, 5, 8 }, // columns
-            { 0, 4, 8 }, { 2, 4, 6 } // diagonals
-    };
-
     public Game getGame() {
         return game;
     }
@@ -102,17 +96,6 @@ public class GameService {
     public Game resetGame(int size) {
         game = new Game(size);
         return game;
-    }
-
-    private boolean checkWin(String player) {
-        for (int[] combination : WINNING_COMBINATIONS) {
-            if (game.getBoard()[combination[0]] == player &&
-                    game.getBoard()[combination[1]] == player &&
-                    game.getBoard()[combination[2]] == player) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private boolean checkDraw() {
