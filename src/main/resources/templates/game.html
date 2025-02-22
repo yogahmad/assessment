@@ -1,14 +1,28 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <title>Tic Tac Toe</title>
     <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .board {
             display: grid;
             gap: 5px;
             margin: 20px auto;
             width: fit-content;
         }
+
         .cell {
             width: 100px;
             height: 100px;
@@ -19,34 +33,84 @@
             font-size: 40px;
             cursor: pointer;
         }
+
         .cell:hover {
             background-color: #f0f0f0;
         }
+
         .controls {
-            text-align: center;
-            margin: 20px;
+            background-color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
+
+        .back-button {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .back-button:hover {
+            background-color: #555;
+        }
+
         h1 {
-            text-align: center;
             color: #333;
+            margin-bottom: 30px;
         }
+
         .status {
-            text-align: center;
             font-size: 24px;
             margin: 20px 0;
-        }
-        .restart {
-            display: block;
-            margin: 20px auto;
             padding: 10px 20px;
-            font-size: 18px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        select,
+        .restart {
+            padding: 8px 16px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
             cursor: pointer;
+        }
+
+        .restart {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            transition: background-color 0.2s;
+        }
+
+        .restart:hover {
+            background-color: #45a049;
+        }
+
+        select:focus,
+        .restart:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
         }
     </style>
 </head>
+
 <body>
     <h1>Tic Tac Toe Game</h1>
     <div class="controls">
+        <a href="/" class="back-button">Back</a>
         <label for="boardSize">Board Size:</label>
         <select id="boardSize">
             <option value="3">3x3</option>
@@ -123,4 +187,5 @@
         initGame();
     </script>
 </body>
+
 </html>
