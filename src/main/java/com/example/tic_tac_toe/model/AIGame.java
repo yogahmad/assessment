@@ -9,7 +9,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Game {
+public class AIGame {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,7 +27,12 @@ public class Game {
 
     private int size;
 
-    public Game(int size) {
+    @Column(name = "player_first")
+    private boolean playerFirst;
+
+    private String difficulty;
+
+    public AIGame(int size) {
         this.size = size;
         this.board = new String[size * size];
         this.isXTurn = true;
@@ -35,7 +40,7 @@ public class Game {
         this.status = "X's turn";
     }
 
-    public Game() {
+    public AIGame() {
         this(3);
     }
 }

@@ -157,64 +157,91 @@
         const boardSizeSelect = document.getElementById('boardSize');
         const urlParams = new URLSearchParams(window.location.search);
         const isPlayerFirst = urlParams.get('player') === 'first';
-        let gameState = null;
+        let currentGameId = null;
         let isWaiting = false;
 
-        function createBoard(size) {
+        async function createBoard(size) {
             board.style.gridTemplateColumns = `repeat(${size}, 100px)`;
             board.innerHTML = '';
             for (let i = 0; i < size * size; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
                 cell.setAttribute('data-cell', '');
+                cell.setAttribute('data-row', Math.floor(i / size));
+                cell.setAttribute('data-col', i % size);
                 board.appendChild(cell);
             }
             addCellListeners();
         }
 
-        async function updateBoard(newGameState) {
-            gameState = newGameState;
+        async function updateBoard(gameState) {
             const cells = document.querySelectorAll('[data-cell]');
             cells.forEach((cell, index) => {
                 cell.textContent = gameState.board[index] || '';
+                if (gameState.board[index] === 'X') {
+                    cell.classList.add('player-x');
+                } else if (gameState.board[index] === 'O') {
+                    cell.classList.add('player-o');
+                }
             });
             status.textContent = gameState.status;
         }
 
         async function makeAIMove() {
-            board.classList.add('waiting');
-
-            const response = await fetch('/api/game/ai-move', {
-                method: 'POST'
-            });
-            const gameState = await response.json();
-            await updateBoard(gameState);
-
-            isWaiting = false;
-            board.classList.remove('waiting');
+            try {
+                const response = await fetch(`/api/game/vs-ai/${currentGameId}/move/ai`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    const error = await response.text();
+                    status.textContent = error;
+                    return;
+                }
+                const gameState = await response.json();
+                await updateBoard(gameState);
+            } catch (error) {
+                console.error('Error:', error);
+                status.textContent = 'Error making AI move';
+            } finally {
+                isWaiting = false;
+                board.classList.remove('waiting');
+            }
         }
 
         async function handleClick(e) {
-            if (!gameState.gameActive || isWaiting) return;
-            if ((isPlayerFirst && !gameState.isXTurn) || (!isPlayerFirst && gameState.isXTurn)) return;
+            if (!currentGameId || isWaiting) return;
 
-            const cells = document.querySelectorAll('[data-cell]');
-            const index = [...cells].indexOf(e.target);
+            const row = parseInt(e.target.getAttribute('data-row'));
+            const col = parseInt(e.target.getAttribute('data-col'));
 
-            if (gameState.board[index]) return;
+            try {
+                isWaiting = true;
+                board.classList.add('waiting');
 
-            isWaiting = true;
-            board.classList.add('waiting');
+                const response = await fetch(`/api/game/vs-ai/${currentGameId}/move/player?row=${row}&column=${col}`, {
+                    method: 'POST'
+                });
 
-            const response = await fetch(`/api/game/move/${index}`, {
-                method: 'POST'
-            });
-            const newGameState = await response.json();
-            await updateBoard(newGameState);
+                if (!response.ok) {
+                    const error = await response.text();
+                    status.textContent = error;
+                    isWaiting = false;
+                    board.classList.remove('waiting');
+                    return;
+                }
 
-            if (newGameState.gameActive) {
-                setTimeout(makeAIMove, 3000);
-            } else {
+                const gameState = await response.json();
+                await updateBoard(gameState);
+
+                if (gameState.gameActive) {
+                    setTimeout(makeAIMove, 1000);
+                } else {
+                    isWaiting = false;
+                    board.classList.remove('waiting');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                status.textContent = 'Error making move';
                 isWaiting = false;
                 board.classList.remove('waiting');
             }
@@ -229,17 +256,22 @@
 
         async function startGame() {
             const size = parseInt(boardSizeSelect.value);
-            const response = await fetch(`/api/game/reset/${size}`, {
-                method: 'POST'
-            });
-            const gameState = await response.json();
-            createBoard(gameState.size);
-            updateBoard(gameState);
+            try {
+                const response = await fetch(`/api/game/vs-ai/create?size=${size}&isFirstPlayer=${isPlayerFirst}&difficulty=MEDIUM`, {
+                    method: 'POST'
+                });
+                currentGameId = await response.json();
+                await createBoard(size);
+                status.textContent = "Game started! X's turn";
 
-            if (!isPlayerFirst) {
-                isWaiting = true;
-                board.classList.add('waiting');
-                setTimeout(makeAIMove, 3000);
+                if (!isPlayerFirst) {
+                    isWaiting = true;
+                    board.classList.add('waiting');
+                    setTimeout(makeAIMove, 1000);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                status.textContent = 'Error creating game';
             }
         }
 

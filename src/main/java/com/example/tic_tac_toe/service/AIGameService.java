@@ -1,28 +1,42 @@
 package com.example.tic_tac_toe.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.tic_tac_toe.model.Game;
-import com.example.tic_tac_toe.repository.GameRepository;
+import com.example.tic_tac_toe.model.AIGame;
+import com.example.tic_tac_toe.repository.AIGameRepository;
 
 @Service
-public class GameService {
+public class AIGameService {
     @Autowired
-    private GameRepository gameRepository;
+    private AIGameRepository aiGameRepository;
 
-    public Long createMultiplayerGame(int size) {
-        Game game = new Game(size);
-        Game savedGame = gameRepository.save(game);
+    public Long createGame(int size, boolean isFirstPlayer, String difficulty) {
+        AIGame game = new AIGame(size);
+        game.setPlayerFirst(isFirstPlayer);
+        game.setDifficulty(difficulty);
+
+        AIGame savedGame = aiGameRepository.save(game);
         return savedGame.getId();
     }
 
-    public Game makeMultiplayerMove(Long gameId, int row, int column) {
-        Game game = gameRepository.findById(gameId)
+    public AIGame makePlayerMove(Long gameId, int row, int column) {
+        AIGame game = aiGameRepository.findById(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("Game not found"));
 
         if (!game.isGameActive()) {
             throw new IllegalArgumentException("Game is already finished");
+        }
+
+        // Check if it's player's turn
+        boolean isPlayerTurn = (game.isPlayerFirst() && game.isXTurn()) ||
+                (!game.isPlayerFirst() && !game.isXTurn());
+        if (!isPlayerTurn) {
+            throw new IllegalArgumentException("Not player's turn");
         }
 
         int position = row * game.getSize() + column;
@@ -41,10 +55,43 @@ public class GameService {
 
         checkGameStatus(game);
 
-        return gameRepository.save(game);
+        return aiGameRepository.save(game);
     }
 
-    private void checkGameStatus(Game game) {
+    public AIGame makeAIMove(Long gameId) {
+        AIGame game = aiGameRepository.findById(gameId)
+                .orElseThrow(() -> new IllegalArgumentException("Game not found"));
+
+        if (!game.isGameActive()) {
+            throw new IllegalArgumentException("Game is already finished");
+        }
+
+        boolean isAITurn = (game.isPlayerFirst() && !game.isXTurn()) ||
+                (!game.isPlayerFirst() && game.isXTurn());
+        if (!isAITurn) {
+            throw new IllegalArgumentException("Not AI's turn");
+        }
+
+        String[] board = game.getBoard();
+        List<Integer> availableMoves = new ArrayList<>();
+
+        for (int i = 0; i < board.length; i++) {
+            if (board[i] == null) {
+                availableMoves.add(i);
+            }
+        }
+
+        if (!availableMoves.isEmpty()) {
+            int aiMove = availableMoves.get(new Random().nextInt(availableMoves.size()));
+            board[aiMove] = game.isXTurn() ? "X" : "O";
+            game.setXTurn(!game.isXTurn());
+            checkGameStatus(game);
+        }
+
+        return aiGameRepository.save(game);
+    }
+
+    private void checkGameStatus(AIGame game) {
         String winner = checkWinner(game);
         if (winner != null) {
             game.setGameActive(false);
@@ -65,7 +112,7 @@ public class GameService {
         return true;
     }
 
-    private String checkWinner(Game game) {
+    private String checkWinner(AIGame game) {
         String[] board = game.getBoard();
         int size = game.getSize();
 
