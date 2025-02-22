@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <title>Tic Tac Toe</title>
+    <title>Tic Tac Toe - VS AI</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -21,17 +21,28 @@
             gap: 5px;
             margin: 20px auto;
             width: fit-content;
+            background-color: #333;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .board.waiting {
+            pointer-events: none;
+            opacity: 0.7;
         }
 
         .cell {
             width: 100px;
             height: 100px;
-            border: 2px solid #333;
+            background-color: white;
+            border: none;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 40px;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
 
         .cell:hover {
@@ -69,6 +80,12 @@
             margin-bottom: 30px;
         }
 
+        .player-info {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
         .status {
             font-size: 24px;
             margin: 20px 0;
@@ -104,11 +121,22 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
         }
+
+        .cell.player-x {
+            color: #2196F3;
+        }
+
+        .cell.player-o {
+            color: #F44336;
+        }
     </style>
 </head>
 
 <body>
-    <h1>Tic Tac Toe Game</h1>
+    <h1>Tic Tac Toe - VS AI</h1>
+    <div class="player-info">
+        You are playing as: <strong th:text="${player == 'first' ? 'X (First)' : 'O (Second)'}"></strong>
+    </div>
     <div class="controls">
         <a href="/" class="back-button">Back</a>
         <label for="boardSize">Board Size:</label>
@@ -127,6 +155,10 @@
         const status = document.querySelector('.status');
         const restartButton = document.querySelector('.restart');
         const boardSizeSelect = document.getElementById('boardSize');
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPlayerFirst = urlParams.get('player') === 'first';
+        let gameState = null;
+        let isWaiting = false;
 
         function createBoard(size) {
             board.style.gridTemplateColumns = `repeat(${size}, 100px)`;
@@ -140,7 +172,8 @@
             addCellListeners();
         }
 
-        async function updateBoard(gameState) {
+        async function updateBoard(newGameState) {
+            gameState = newGameState;
             const cells = document.querySelectorAll('[data-cell]');
             cells.forEach((cell, index) => {
                 cell.textContent = gameState.board[index] || '';
@@ -148,20 +181,49 @@
             status.textContent = gameState.status;
         }
 
-        async function handleClick(e) {
-            const cells = document.querySelectorAll('[data-cell]');
-            const index = [...cells].indexOf(e.target);
-            const response = await fetch(`/api/game/move/${index}`, {
+        async function makeAIMove() {
+            board.classList.add('waiting');
+
+            const response = await fetch('/api/game/ai-move', {
                 method: 'POST'
             });
             const gameState = await response.json();
-            updateBoard(gameState);
+            await updateBoard(gameState);
+
+            isWaiting = false;
+            board.classList.remove('waiting');
+        }
+
+        async function handleClick(e) {
+            if (!gameState.gameActive || isWaiting) return;
+            if ((isPlayerFirst && !gameState.isXTurn) || (!isPlayerFirst && gameState.isXTurn)) return;
+
+            const cells = document.querySelectorAll('[data-cell]');
+            const index = [...cells].indexOf(e.target);
+
+            if (gameState.board[index]) return;
+
+            isWaiting = true;
+            board.classList.add('waiting');
+
+            const response = await fetch(`/api/game/move/${index}`, {
+                method: 'POST'
+            });
+            const newGameState = await response.json();
+            await updateBoard(newGameState);
+
+            if (newGameState.gameActive) {
+                setTimeout(makeAIMove, 3000);
+            } else {
+                isWaiting = false;
+                board.classList.remove('waiting');
+            }
         }
 
         function addCellListeners() {
             const cells = document.querySelectorAll('[data-cell]');
             cells.forEach(cell => {
-                cell.addEventListener('click', handleClick, { once: true });
+                cell.addEventListener('click', handleClick);
             });
         }
 
@@ -173,18 +235,17 @@
             const gameState = await response.json();
             createBoard(gameState.size);
             updateBoard(gameState);
-        }
 
-        async function initGame() {
-            const response = await fetch('/api/game');
-            const gameState = await response.json();
-            createBoard(gameState.size);
-            updateBoard(gameState);
+            if (!isPlayerFirst) {
+                isWaiting = true;
+                board.classList.add('waiting');
+                setTimeout(makeAIMove, 3000);
+            }
         }
 
         restartButton.addEventListener('click', startGame);
         boardSizeSelect.addEventListener('change', startGame);
-        initGame();
+        startGame();
     </script>
 </body>
 
