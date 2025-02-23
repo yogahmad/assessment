@@ -7,6 +7,7 @@ import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.tic_tac_toe.client.AIClient;
 import com.example.tic_tac_toe.model.AIGame;
 import com.example.tic_tac_toe.repository.AIGameRepository;
 
@@ -73,8 +74,35 @@ public class AIGameService {
         }
 
         String[] board = game.getBoard();
-        List<Integer> availableMoves = new ArrayList<>();
+        StringBuilder boardString = new StringBuilder("[");
+        int size = game.getSize();
+        for (int i = 0; i < size; i++) {
+            boardString.append(String.join("",
+                    java.util.Arrays.stream(board, i * size, (i + 1) * size)
+                            .map(cell -> cell == null ? "." : cell)
+                            .toArray(String[]::new)));
+            if (i < size - 1) {
+                boardString.append(", ");
+            }
+        }
+        boardString.append("]");
 
+        try {
+            String playingAs = game.isXTurn() ? "X" : "O";
+            int[] aiMove = AIClient.getMove(boardString.toString(), playingAs);
+            int position = aiMove[0] * game.getSize() + aiMove[1];
+            if (position >= 0 && position < board.length && board[position] == null) {
+                board[position] = playingAs;
+                game.setXTurn(!game.isXTurn());
+                checkGameStatus(game);
+                return aiGameRepository.save(game);
+            }
+        } catch (Exception e) {
+            System.out.println("AI service failed, falling back to random move: " + e.getMessage());
+        }
+
+        // Fallback to random move
+        List<Integer> availableMoves = new ArrayList<>();
         for (int i = 0; i < board.length; i++) {
             if (board[i] == null) {
                 availableMoves.add(i);
