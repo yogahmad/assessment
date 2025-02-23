@@ -8,8 +8,11 @@ Features:
 Deployed on AWS: [Play Game](https://vypcepjcye.ap-southeast-1.awsapprunner.com/)
 
 # Vs AI
-Vs AI algorithm feature is implemented with OpenAI's GPT-4o 
+Vs AI algorithm feature is implemented with OpenAI's GPT-4o.
+
 *It turns out that GPT-4o is not good at tic-tac-toe*
+
+You can find the OpenAI integration [here](https://github.com/yogahmad/assessment/blob/main/src/main/java/com/example/tic_tac_toe/client/OpenAIConfig.java) and [here](https://github.com/yogahmad/assessment/blob/main/src/main/java/com/example/tic_tac_toe/client/AIClient.java)
 
 Tried these LLMs with similar or worse result:
 - `mistral-large-latest`
