@@ -1,4 +1,4 @@
-### Tic-Tac-Toe
+# Tic-Tac-Toe
 
 Features:
 
@@ -7,7 +7,7 @@ Features:
 
 Deployed on AWS: [Play Game](https://vypcepjcye.ap-southeast-1.awsapprunner.com/)
 
-## Vs AI
+# Vs AI
 Vs AI algorithm feature is implemented with OpenAI's GPT-4o 
 *It turns out that GPT-4o is not good at tic-tac-toe*
 
@@ -19,7 +19,7 @@ Haven't tried LLMs with reasoning capability yet:
 - `deepseek R1` (Because of unavailability of `deepseek R1`)
 - `GPT-o3`
 
-#### How to run
+# How to run
 
 - Clone the repository
 - `cp .env.example .env`
