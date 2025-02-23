@@ -17,8 +17,6 @@ public class AIClient {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + OpenAIConfig.getApiKey());
 
-            System.out.println("Request Body: " + OpenAIConfig.getApiKey());
-
             String requestBody = String.format(OpenAIConfig.REQUEST_TEMPLATE, playingAs, board);
 
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
